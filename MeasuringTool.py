@@ -45,8 +45,8 @@ class MeasurementApp:
             x1, y1 = self.reference_line[0]
             x2, y2 = self.reference_line[1]
             distance_pixels = ((x2 - x1)**2 + (y2 - y1)**2)**0.5
-
             self.scale = distance_pixels / reference_length
+
             scale_label_x = (self.reference_line[0][0] + self.reference_line[1][0]) / 2
             scale_label_y = (self.reference_line[0][1] + self.reference_line[1][1]) / 2
             self.canvas.create_text(scale_label_x, scale_label_y, text=f"Scale: {reference_length:.2f} units", fill="green")
@@ -68,15 +68,6 @@ class MeasurementApp:
         elif len(self.points) >= 2 and self.scale:
             distance = self.calculate_distance(self.points[self.prevPoint], self.points[self.currPoint])
             print(f"Distance: {distance} units")
-
-        
-    # def calculate_distance(self, point1, point2):
-    #     x1, y1 = point1
-    #     x2, y2 = point2
-    #     # Calculate the distance using the scale factor
-    #     return ((x2 - x1)**2 + (y2 - y1)**2)**0.5 * self.scale
-
-    ### divide pixels by scale then use devide result 
     
     def calculate_distance(self, point1, point2):
         x1, y1 = point1
