@@ -81,8 +81,8 @@ class MeasurementApp:
         if len(self.points) >= 3 and self.is_close_to_first_point(self.points[0], self.points[-1]):
             self.shapes.append(self.points[:])  # Store the shape
             self.points = []  # Reset points for the next shape
-            # AREA NEEDS FIXING
-            self.calculate_area()
+            area = self.calculate_area(self.shapes[-1])
+            self.draw_area(self.shapes[-1], area)
 
 
     def is_close_to_first_point(self, point1, point2):
@@ -104,6 +104,16 @@ class MeasurementApp:
         scale_label_x = (x1 + x2) / 2
         scale_label_y = (y1 + y2) / 2
         self.canvas.create_text(scale_label_x, scale_label_y, text=f"{line.distance:.2f} units", fill=color)
+
+    def draw_area(self, shape, area,  alpha=0.5):
+        # Calculate the center of the shape
+        x_coords, y_coords = zip(*shape)
+        center_x = sum(x_coords) / len(shape)
+        center_y = sum(y_coords) / len(shape)
+
+        # Display the area measurement at the centroid
+        self.canvas.create_text(center_x, center_y, text=f"{area:.2f} sq. units", fill="black")
+
 
     def on_right_click(self, event):
         x, y = event.x, event.y
@@ -132,10 +142,11 @@ class MeasurementApp:
         distance_units = distance_pixels / self.scale
         return distance_units
 
-    def calculate_area(self):
-        for shape in self.shapes:
-            area = self.calculate_polygon_area(shape)
-            print(f"Area of shape: {area} square units")
+    def calculate_area(self, shape):
+        area = self.calculate_polygon_area(shape)
+        area_units = area / (self.scale ** 2)  # Convert pixels to units
+        print(f"Area of shape: {area_units} square units")
+        return area_units
 
     def calculate_polygon_area(self, vertices):
         # Calculate the area of a polygon using the shoelace formula
