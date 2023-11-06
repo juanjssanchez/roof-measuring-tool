@@ -7,6 +7,7 @@ class LineSegment:
         self.start = start
         self.end = end
         self.color = color
+        self.distance = None
 
 class MeasurementApp:
     def __init__(self, root):
@@ -55,11 +56,6 @@ class MeasurementApp:
             distance_pixels = ((x2 - x1)**2 + (y2 - y1)**2)**0.5
             self.scale = distance_pixels / reference_length
 
-            scale_label_x = (x1 + x2) / 2
-            scale_label_y = (y1 + y2) / 2
-            self.canvas.create_text(scale_label_x, scale_label_y, text=f"Scale: {reference_length:.2f} units", fill="green")
-            print(f"Scale set to {reference_length} units")
-
     def on_click(self, event):
         x, y = event.x, event.y
         self.points.append((x, y))
@@ -77,8 +73,9 @@ class MeasurementApp:
 
         # calculate distance between points
         if len(self.points) >= 2 and self.scale:
-            distance = self.calculate_distance(self.lines[-1])
-            print(f"Distance: {distance} units")
+            self.lines[-1].distance = self.calculate_distance(self.lines[-1])
+            self.draw_line_measurement(self.lines[-1])
+            print(f"Distance: {self.lines[-1].distance} units")
 
         # check if shape should be closed
         if len(self.points) >= 3 and self.is_close_to_first_point(self.points[0], self.points[-1]):
@@ -100,6 +97,14 @@ class MeasurementApp:
         x2, y2 = end
         self.canvas.create_line(x1, y1, x2, y2, fill=color)
 
+    def draw_line_measurement(self, line, color="green"):
+        x1, y1 = line.start
+        x2, y2 = line.end
+
+        scale_label_x = (x1 + x2) / 2
+        scale_label_y = (y1 + y2) / 2
+        self.canvas.create_text(scale_label_x, scale_label_y, text=f"{line.distance:.2f} units", fill=color)
+
     def on_right_click(self, event):
         x, y = event.x, event.y
         # Check if the click selects a line
@@ -107,6 +112,7 @@ class MeasurementApp:
             if self.is_point_on_line(x, y, line):
                 # Highlight the selected line
                 self.selected_line = line
+                print(self.selected_line.distance)
                 self.draw_line_segment(line.start, line.end, color="red")
                 break
         else:
