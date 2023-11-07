@@ -9,6 +9,11 @@ class LineSegment:
         self.color = color
         self.distance = None
 
+class Shape:
+    def __init__(self, vertices):
+        self.vertices = vertices
+        self.area = None
+
 class MeasurementApp:
     def __init__(self, root):
         self.root = root
@@ -35,7 +40,6 @@ class MeasurementApp:
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open Image", command=self.open_image)
         file_menu.add_command(label="Set Scale", command=self.set_scale)
-        file_menu.add_command(label="Calculate Area", command=self.calculate_area)
         
         # Store the currently selected line
         self.selected_line = None
@@ -75,15 +79,13 @@ class MeasurementApp:
         if len(self.points) >= 2 and self.scale:
             self.lines[-1].distance = self.calculate_distance(self.lines[-1])
             self.draw_line_measurement(self.lines[-1])
-            print(f"Distance: {self.lines[-1].distance} units")
 
         # check if shape should be closed
         if len(self.points) >= 3 and self.is_close_to_first_point(self.points[0], self.points[-1]):
-            self.shapes.append(self.points[:])  # Store the shape
+            self.shapes.append(Shape(self.points[:]))  # Store the shape
             self.points = []  # Reset points for the next shape
-            area = self.calculate_area(self.shapes[-1])
-            self.draw_area(self.shapes[-1], area)
-
+            self.shapes[-1].area = self.calculate_area(self.shapes[-1])
+            self.draw_area(self.shapes[-1], self.shapes[-1].area)
 
     def is_close_to_first_point(self, point1, point2):
         # Check if the distance between two points is close enough to consider them the same point
@@ -107,13 +109,18 @@ class MeasurementApp:
 
     def draw_area(self, shape, area,  alpha=0.5):
         # Calculate the center of the shape
-        x_coords, y_coords = zip(*shape)
-        center_x = sum(x_coords) / len(shape)
-        center_y = sum(y_coords) / len(shape)
+        x_coords, y_coords = zip(*shape.vertices)
+        center_x = sum(x_coords) / len(shape.vertices)
+        center_y = sum(y_coords) / len(shape.vertices)
 
-        # Display the area measurement at the centroid
+        # Display the area measurement at the center and fill
+        self.fill_shape(shape)
         self.canvas.create_text(center_x, center_y, text=f"{area:.2f} sq. units", fill="black")
 
+    def fill_shape(self, shape, alpha=0.5):
+        x_coords, y_coords = zip(*shape.vertices)
+
+        self.canvas.create_polygon(shape.vertices, fill="white", outline="", stipple='gray12', width=2)
 
     def on_right_click(self, event):
         x, y = event.x, event.y
@@ -143,9 +150,8 @@ class MeasurementApp:
         return distance_units
 
     def calculate_area(self, shape):
-        area = self.calculate_polygon_area(shape)
+        area = self.calculate_polygon_area(shape.vertices)
         area_units = area / (self.scale ** 2)  # Convert pixels to units
-        print(f"Area of shape: {area_units} square units")
         return area_units
 
     def calculate_polygon_area(self, vertices):
