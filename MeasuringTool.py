@@ -2,12 +2,17 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import simpledialog
 
+class MeasurementMode:
+    CREATE_SHAPE = "Create Shape"
+    EDIT_LINE = "Edit Line"
+
 class LineSegment:
     def __init__(self, start, end, color="blue"):
         self.start = start
         self.end = end
         self.color = color
         self.distance = None
+        self.label = None
 
 class Shape:
     def __init__(self, vertices):
@@ -21,11 +26,14 @@ class MeasurementApp:
         
         self.canvas = tk.Canvas(root)
         self.canvas.pack(expand=tk.YES, fill=tk.BOTH)
+        self.canvas.config(width=900, height=600) #initial canvas size
         self.canvas.bind("<Button-1>", self.on_click)
         self.canvas.bind("<Button-3>", self.on_right_click)  # Right click to select lines
         
         self.image = None
         self.scale = None
+        
+        self.mode = MeasurementMode.CREATE_SHAPE # current mode
         
         self.points = []  # Stores vertices of the current shape
         self.shapes = []  # Stores multiple shapes as a list of lists
@@ -39,7 +47,8 @@ class MeasurementApp:
         file_menu = tk.Menu(menubar)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open Image", command=self.open_image)
-        file_menu.add_command(label="Set Scale", command=self.set_scale)
+        file_menu.add_command(label="Create Shape Mode", command=self.set_create_shape_mode)
+        file_menu.add_command(label="Edit Line Mode", command=self.set_edit_line_mode)
         
         # Store the currently selected line
         self.selected_line = None
@@ -61,31 +70,54 @@ class MeasurementApp:
             self.scale = distance_pixels / reference_length
 
     def on_click(self, event):
-        x, y = event.x, event.y
-        self.points.append((x, y))
-        self.canvas.create_oval(x-2, y-2, x+2, y+2, fill="red")
+        # CREATING LINES/SHAPES MODE
+        if self.mode == MeasurementMode.CREATE_SHAPE:
+            x, y = event.x, event.y
+            self.points.append((x, y))
+            self.canvas.create_oval(x-2, y-2, x+2, y+2, fill="red")
 
-        # draw line
-        if len(self.points) > 1:            
-            line = self.points[-2], self.points[-1]
-            self.lines.append(LineSegment(*line))
-            self.draw_line_segment(line[0], line[1], color="blue")
-            
-            # set the scale for first line
-            if len(self.points) == 2 and self.scale == None:
-                self.set_scale()
+            # draw line
+            if len(self.points) > 1:            
+                line = self.points[-2], self.points[-1]
+                self.lines.append(LineSegment(*line))
+                self.draw_line_segment(line[0], line[1], color="blue")
+                
+                # set the scale for first line
+                if len(self.points) == 2 and self.scale == None:
+                    self.set_scale()
 
-        # calculate distance between points
-        if len(self.points) >= 2 and self.scale:
-            self.lines[-1].distance = self.calculate_distance(self.lines[-1])
-            self.draw_line_measurement(self.lines[-1])
+            # calculate distance between points
+            if len(self.points) >= 2 and self.scale:
+                self.lines[-1].distance = self.calculate_distance(self.lines[-1])
+                self.draw_line_measurement(self.lines[-1])
 
-        # check if shape should be closed
-        if len(self.points) >= 3 and self.is_close_to_first_point(self.points[0], self.points[-1]):
-            self.shapes.append(Shape(self.points[:]))  # Store the shape
-            self.points = []  # Reset points for the next shape
-            self.shapes[-1].area = self.calculate_area(self.shapes[-1])
-            self.draw_area(self.shapes[-1], self.shapes[-1].area)
+            # check if shape should be closed
+            if len(self.points) >= 3 and self.is_close_to_first_point(self.points[0], self.points[-1]):
+                self.shapes.append(Shape(self.points[:]))  # Store the shape
+                self.points = []  # Reset points for the next shape
+                self.shapes[-1].area = self.calculate_area(self.shapes[-1])
+                self.draw_area(self.shapes[-1], self.shapes[-1].area)
+        
+        # EDIT LINE MODE
+        elif self.mode == MeasurementMode.EDIT_LINE:
+
+            # ridge, valley, rake, eaves
+
+            # **** ON RIGHT CLICK FUNCTIONALITY AS PLACEHOLDER
+            x, y = event.x, event.y
+            # Check if the click selects a line
+            for line in self.lines:
+                if self.is_point_on_line(x, y, line):
+                    # Highlight the selected line
+                    self.selected_line = line
+                    print(self.selected_line.distance)
+                    print(self.selected_line.label)
+                    self.draw_line_segment(line.start, line.end, color="red")
+                    break
+            else:
+                # If the click did not select a line, clear the selection
+                self.selected_line = None
+
 
     def is_close_to_first_point(self, point1, point2):
         # Check if the distance between two points is close enough to consider them the same point
@@ -123,21 +155,10 @@ class MeasurementApp:
         self.canvas.create_polygon(shape.vertices, fill="white", outline="", stipple='gray12', width=2)
 
     def on_right_click(self, event):
-        x, y = event.x, event.y
-        # Check if the click selects a line
-        for line in self.lines:
-            if self.is_point_on_line(x, y, line):
-                # Highlight the selected line
-                self.selected_line = line
-                print(self.selected_line.distance)
-                self.draw_line_segment(line.start, line.end, color="red")
-                break
-        else:
-            # If the click did not select a line, clear the selection
-            self.selected_line = None
+        print("do something with this later idk")
 
     def is_point_on_line(self, x, y, line):
-        # Check if a point (x, y) is near a line defined by its endpoints
+        # check if a point (x, y) is near a line defined by its endpoints
         x1, y1 = line.start
         x2, y2 = line.end
         distance = abs((x2 - x1) * (y1 - y) - (x1 - x) * (y2 - y1)) / ((x2 - x1)**2 + (y2 - y1)**2)**0.5
@@ -151,7 +172,7 @@ class MeasurementApp:
 
     def calculate_area(self, shape):
         area = self.calculate_polygon_area(shape.vertices)
-        area_units = area / (self.scale ** 2)  # Convert pixels to units
+        area_units = area / (self.scale ** 2)  # convert pixels to units
         return area_units
 
     def calculate_polygon_area(self, vertices):
@@ -167,6 +188,12 @@ class MeasurementApp:
             area += (x1 * y2 - x2 * y1)
 
         return abs(area) / 2
+
+    # Mode switching
+    def set_create_shape_mode(self):
+        self.mode = MeasurementMode.CREATE_SHAPE
+    def set_edit_line_mode(self):
+        self.mode = MeasurementMode.EDIT_LINE
 
 if __name__ == "__main__":
     root = tk.Tk()
