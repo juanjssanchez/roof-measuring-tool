@@ -74,26 +74,42 @@ class MeasurementApp:
         # CREATING LINES/SHAPES MODE
         if self.mode == MeasurementMode.CREATE_SHAPE:
             x, y = event.x, event.y
+
+            # Check for a preexisting vertex
+            for shape in self.shapes:
+                for vertex in shape.vertices:
+                    if self.is_close_to_point((x,y), vertex):
+                        (x,y) = vertex  # Set existing vertex as the current vertex
+            # Check if current point is close to the first point (completing the shape)(this is messy)
+            if self.points and self.is_close_to_point((x,y), self.points[0]):
+                (x, y) = self.points[0]
+
             self.points.append((x, y))
             self.canvas.create_oval(x-2, y-2, x+2, y+2, fill="red")
 
-            # draw line
+            # Draw line
             if len(self.points) > 1:            
-                line = self.points[-2], self.points[-1]
-                self.lines.append(LineSegment(*line))
-                self.draw_line_segment(line[0], line[1], color="blue")
-                
-                # set the scale for first line
+                current_line = self.points[-2], self.points[-1]
+
+                # Check if line segment exists
+                for line in self.lines:
+                    if (line.start, line.end) == current_line or (line.end, line.start) == current_line:
+                        break
+                else:
+                    self.lines.append(LineSegment(*current_line)) # Store line if it doesnt exist already
+                    self.draw_line_segment(current_line[0], current_line[1], color="blue")
+
+                # Set the scale for first line
                 if len(self.points) == 2 and self.scale == None:
                     self.set_scale()
 
-            # calculate distance between points
+            # Calculate distance between points
             if len(self.points) >= 2 and self.scale:
                 self.lines[-1].distance = self.calculate_distance(self.lines[-1])
                 self.draw_line_measurement(self.lines[-1])
 
-            # check if shape should be closed
-            if len(self.points) >= 3 and self.is_close_to_first_point(self.points[0], self.points[-1]):
+            # Check if shape should be closed
+            if len(self.points) >= 3 and self.is_close_to_point(self.points[0], self.points[-1]):
                 self.shapes.append(Shape(self.points[:]))  # Store the shape
                 self.points = []  # Reset points for the next shape
                 self.shapes[-1].area = self.calculate_area(self.shapes[-1])
@@ -102,9 +118,9 @@ class MeasurementApp:
         # EDIT LINE MODE
         elif self.mode == MeasurementMode.EDIT_LINE:
 
-            # ridge, valley, rake, eaves
+            # Options: ridge, valley, rake, eaves
 
-            # **** ON RIGHT CLICK FUNCTIONALITY AS PLACEHOLDER
+            # **** ON_RIGHT_CLICK FUNCTIONALITY AS PLACEHOLDER ****
             x, y = event.x, event.y
             # Check if the click selects a line
             for line in self.lines:
@@ -120,7 +136,7 @@ class MeasurementApp:
                 self.selected_line = None
 
 
-    def is_close_to_first_point(self, point1, point2):
+    def is_close_to_point(self, point1, point2):
         # Check if the distance between two points is close enough to consider them the same point
         x1, y1 = point1
         x2, y2 = point2
