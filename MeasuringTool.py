@@ -49,6 +49,7 @@ class MeasurementApp:
         file_menu.add_command(label="Open Image", command=self.open_image)
         file_menu.add_command(label="Create Shape Mode", command=self.set_create_shape_mode)
         file_menu.add_command(label="Edit Line Mode", command=self.set_edit_line_mode)
+        file_menu.add_command(label="Generate Final Report", command=self.generate_report)
         
         # Store the currently selected line
         self.selected_line = None
@@ -157,6 +158,7 @@ class MeasurementApp:
     def on_right_click(self, event):
         print("do something with this later idk")
 
+            
     def is_point_on_line(self, x, y, line):
         # check if a point (x, y) is near a line defined by its endpoints
         x1, y1 = line.start
@@ -188,6 +190,23 @@ class MeasurementApp:
             area += (x1 * y2 - x2 * y1)
 
         return abs(area) / 2
+
+    def generate_report(self):
+        lineList = ""
+        distanceTotal = 0
+        for line in self.lines:
+            lineList += f"{round(line.distance, 2)}, "
+            distanceTotal += line.distance
+        print("list of distances: " + lineList)
+        print("Total Distance: ", round(distanceTotal, 2))
+
+        areaList = ""
+        areaTotal = 0
+        for shape in self.shapes:
+            areaList += f"{round(shape.area, 2)}, "
+            areaTotal += shape.area
+        print("list of areas: " + areaList)
+        print("Total Area: ", round(areaTotal, 2))
 
     # Mode switching
     def set_create_shape_mode(self):
