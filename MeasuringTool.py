@@ -54,11 +54,51 @@ class MeasurementApp:
         # Store the currently selected line
         self.selected_line = None
 
+        # Store the selected label
+        self.selected_label = tk.StringVar()
+
+        # Create a label selection frame
+        self.label_frame = tk.Frame(self.root)
+        self.label_frame.pack()
+
+        # Create label buttons
+        labels = ["Ridge", "Valley", "Rake", "Eave"]
+        self.label_buttons = []
+        for label in labels:
+            label_button = tk.Radiobutton(
+                self.label_frame,
+                text=label,
+                variable=self.selected_label,
+                value=label,
+            )
+            self.label_buttons.append(label_button)
+            label_button.pack(side=tk.LEFT)
+            label_button.configure(state="disabled")  # Initially disable the buttons
+
+        # Set an initial value for the selected label
+        self.selected_label.set(labels[0])
+
     def open_image(self):
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.gif *.bmp")])
         if file_path:
             self.image = tk.PhotoImage(file=file_path)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.image)
+    
+    # Mode switching
+    def set_create_shape_mode(self):
+        self.set_mode(MeasurementMode.CREATE_SHAPE)
+    def set_edit_line_mode(self):
+        self.set_mode(MeasurementMode.EDIT_LINE)
+
+    def set_mode(self, mode):
+        self.mode = mode
+
+        if mode == MeasurementMode.EDIT_LINE:
+            for label_button in self.label_buttons:
+                label_button.configure(state="normal")  # Enable buttons in edit mode
+        else:
+            for label_button in self.label_buttons:
+                label_button.configure(state="disabled")  # Disable buttons in other modes
 
     def set_scale(self):
         self.reference_line = self.lines[-1] if self.lines else None
@@ -117,22 +157,24 @@ class MeasurementApp:
         
         # EDIT LINE MODE
         elif self.mode == MeasurementMode.EDIT_LINE:
-
-            # Options: ridge, valley, rake, eaves
-
-            # **** ON_RIGHT_CLICK FUNCTIONALITY AS PLACEHOLDER ****
-            x, y = event.x, event.y
             # Check if the click selects a line
             for line in self.lines:
-                if self.is_point_on_line(x, y, line):
+                if self.is_point_on_line(event.x, event.y, line):
+                    
+                    if self.selected_line:
+                        self.draw_line_segment(self.selected_line.start, self.selected_line.end, color="blue")
                     # Highlight the selected line
                     self.selected_line = line
-                    print(self.selected_line.distance)
-                    print(self.selected_line.label)
                     self.draw_line_segment(line.start, line.end, color="red")
+                    # Set the label of the selected line to the chosen label
+                    self.selected_line.label = self.selected_label.get()
                     break
             else:
-                # If the click did not select a line, clear the selection
+                # Clear the selection and return color
+                if self.selected_line:
+                    self.draw_line_segment(
+                        self.selected_line.start, self.selected_line.end, color="blue"
+                    )
                 self.selected_line = None
 
 
@@ -172,7 +214,12 @@ class MeasurementApp:
         self.canvas.create_polygon(shape.vertices, fill="white", outline="", stipple='gray12', width=2)
 
     def on_right_click(self, event):
-        print("do something with this later idk")
+        # Print the selected line label
+        for line in self.lines:
+            if self.is_point_on_line(event.x, event.y, line):
+                # Highlight the selected line
+                self.selected_line = line
+                print(self.selected_line.label)
 
             
     def is_point_on_line(self, x, y, line):
@@ -212,6 +259,7 @@ class MeasurementApp:
         distanceTotal = 0
         for line in self.lines:
             lineList += f"{round(line.distance, 2)}, "
+
             distanceTotal += line.distance
         print("list of distances: " + lineList)
         print("Total Distance: ", round(distanceTotal, 2))
@@ -223,12 +271,6 @@ class MeasurementApp:
             areaTotal += shape.area
         print("list of areas: " + areaList)
         print("Total Area: ", round(areaTotal, 2))
-
-    # Mode switching
-    def set_create_shape_mode(self):
-        self.mode = MeasurementMode.CREATE_SHAPE
-    def set_edit_line_mode(self):
-        self.mode = MeasurementMode.EDIT_LINE
 
 if __name__ == "__main__":
     root = tk.Tk()
