@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import simpledialog
+from collections import Counter
 
 class MeasurementMode:
     CREATE_SHAPE = "Create Shape"
@@ -11,7 +12,7 @@ class LineSegment:
         self.start = start
         self.end = end
         self.distance = None
-        self.label = None
+        self.label = "Eave"
 
 class Shape:
     def __init__(self, vertices):
@@ -288,13 +289,14 @@ class MeasurementApp:
 
 
     def generate_report(self):
-        lineList = ""
+        distanceList = ""
         distanceTotal = 0
+        labelList = []
         for line in self.lines:
-            lineList += f"{round(line.distance, 2)}, "
-
+            distanceList += f"{round(line.distance, 2)}, "
+            labelList.append(line.label)
             distanceTotal += line.distance
-        print("List of distances: " + lineList)
+        print("List of distances: " + distanceList)
         print("Total Distance: ", round(distanceTotal, 2))
 
         areaList = ""
@@ -304,6 +306,12 @@ class MeasurementApp:
             areaTotal += shape.area
         print("List of areas: " + areaList)
         print("Total Area: ", round(areaTotal, 2))
+
+        # Count how many ridges, valleys, etc
+        string_counts = {}
+        string_counts = Counter(labelList)
+        for string, count in string_counts.items():
+            print(f"{string}: {count}")
 
 if __name__ == "__main__":
     root = tk.Tk()
