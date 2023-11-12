@@ -10,7 +10,6 @@ class LineSegment:
     def __init__(self, start, end, color="blue"):
         self.start = start
         self.end = end
-        self.color = color
         self.distance = None
         self.label = None
 
@@ -26,20 +25,21 @@ class MeasurementApp:
         
         self.canvas = tk.Canvas(root)
         self.canvas.pack(expand=tk.YES, fill=tk.BOTH)
-        self.canvas.config(width=900, height=600) #initial canvas size
+        self.canvas.config(width=900, height=600) # Initial canvas size
         self.canvas.bind("<Button-1>", self.on_click)
         self.canvas.bind("<Button-3>", self.on_right_click)  # Right click to select lines
         
         self.image = None
         self.scale = None
         
-        self.mode = MeasurementMode.CREATE_SHAPE # current mode
+        self.mode = MeasurementMode.CREATE_SHAPE # Current mode
         
         self.points = []  # Stores vertices of the current shape
         self.shapes = []  # Stores multiple shapes as a list of lists
         self.lines = []   # Stores LineSegment instances
 
-        self.reference_line = None
+        self.pointSize = 3 # default
+        self.lineWidth = 3 # default
 
         # Menu
         menubar = tk.Menu(root)
@@ -101,12 +101,12 @@ class MeasurementApp:
                 label_button.configure(state="disabled")  # Disable buttons in other modes
 
     def set_scale(self):
-        self.reference_line = self.lines[-1] if self.lines else None
+        reference_line = self.lines[-1] if self.lines else None
 
         reference_length = simpledialog.askfloat("Set Scale", "Enter the length of the reference line (in real-world units):")
         if reference_length:
-            x1, y1 = self.reference_line.start
-            x2, y2 = self.reference_line.end
+            x1, y1 = reference_line.start
+            x2, y2 = reference_line.end
             distance_pixels = ((x2 - x1)**2 + (y2 - y1)**2)**0.5
             self.scale = distance_pixels / reference_length
 
@@ -125,7 +125,7 @@ class MeasurementApp:
                 (x, y) = self.points[0]
 
             self.points.append((x, y))
-            self.canvas.create_oval(x-2, y-2, x+2, y+2, fill="red")
+            self.canvas.create_oval(x-self.pointSize, y-self.pointSize, x+self.pointSize, y+self.pointSize, fill="red")
 
             # Draw line
             if len(self.points) > 1:            
@@ -137,7 +137,7 @@ class MeasurementApp:
                         break
                 else:
                     self.lines.append(LineSegment(*current_line)) # Store line if it doesnt exist already
-                    self.draw_line_segment(current_line[0], current_line[1], color="blue")
+                    self.draw_line_segment(current_line[0], current_line[1])
 
                 # Set the scale for first line
                 if len(self.points) == 2 and self.scale == None:
@@ -162,10 +162,10 @@ class MeasurementApp:
                 if self.is_point_on_line(event.x, event.y, line):
                     
                     if self.selected_line:
-                        self.draw_line_segment(self.selected_line.start, self.selected_line.end, color="blue")
+                        self.draw_line_segment(self.selected_line.start, self.selected_line.end)
                     # Highlight the selected line
                     self.selected_line = line
-                    self.draw_line_segment(line.start, line.end, color="red")
+                    self.draw_line_segment(line.start, line.end)
                     # Set the label of the selected line to the chosen label
                     self.selected_line.label = self.selected_label.get()
                     break
@@ -173,7 +173,7 @@ class MeasurementApp:
                 # Clear the selection and return color
                 if self.selected_line:
                     self.draw_line_segment(
-                        self.selected_line.start, self.selected_line.end, color="blue"
+                        self.selected_line.start, self.selected_line.end
                     )
                 self.selected_line = None
 
@@ -185,10 +185,27 @@ class MeasurementApp:
 
         return ((x2 - x1)**2 + (y2 - y1)**2)**0.5 < 5
     
-    def draw_line_segment(self, start, end, color="blue"):
+    def draw_line_segment(self, start, end):
+        color = "blue"  # Default to blue color
+
+        if self.mode == MeasurementMode.EDIT_LINE:
+            if (start, end) in [(line.start, line.end) for line in self.lines]:
+                # Check if the line's endpoints are in the list of lines
+                line = [line for line in self.lines if (start, end) == (line.start, line.end)][0]
+                label = line.label
+
+                if label == "Valley":
+                    color = "purple"
+                elif label == "Eave":
+                    color = "dark blue"
+                elif label == "Rake":
+                    color = "orange"
+                elif label == "Ridge":
+                    color = "pink"
+
         x1, y1 = start
         x2, y2 = end
-        self.canvas.create_line(x1, y1, x2, y2, fill=color)
+        self.canvas.create_line(x1, y1, x2, y2, fill=color, width=self.lineWidth)
 
     def draw_line_measurement(self, line, color="green"):
         x1, y1 = line.start
@@ -196,7 +213,7 @@ class MeasurementApp:
 
         scale_label_x = (x1 + x2) / 2
         scale_label_y = (y1 + y2) / 2
-        self.canvas.create_text(scale_label_x, scale_label_y, text=f"{line.distance:.2f} units", fill=color)
+        self.draw_text(scale_label_x, scale_label_y, f"{line.distance:.2f} f", color)
 
     def draw_area(self, shape, area,  alpha=0.5):
         # Calculate the center of the shape
@@ -206,7 +223,20 @@ class MeasurementApp:
 
         # Display the area measurement at the center and fill
         self.fill_shape(shape)
-        self.canvas.create_text(center_x, center_y, text=f"{area:.2f} sq. units", fill="black")
+        self.draw_text(center_x, center_y, f"{area:.2f} sqft", "black")
+
+    def draw_text(self, x, y, text, fill):
+        # Define a bounding box around the text
+        strLength = len(text)
+        strLength = strLength * 3 # sizes border based on text length
+        text_bbox = (x - strLength, y - 10, x + strLength, y + 10)
+
+        # Create a background rectangle
+        self.canvas.create_rectangle(text_bbox, fill="white")
+        # Create the text on top of the rectangle
+        self.canvas.create_text(x, y, text=text, fill=fill)
+
+
 
     def fill_shape(self, shape, alpha=0.5):
         x_coords, y_coords = zip(*shape.vertices)
