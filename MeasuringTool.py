@@ -87,6 +87,7 @@ class MeasurementApp:
     # Mode switching
     def set_create_shape_mode(self):
         self.set_mode(MeasurementMode.CREATE_SHAPE)
+
     def set_edit_line_mode(self):
         self.set_mode(MeasurementMode.EDIT_LINE)
 
@@ -109,6 +110,7 @@ class MeasurementApp:
             x2, y2 = reference_line.end
             distance_pixels = ((x2 - x1)**2 + (y2 - y1)**2)**0.5
             self.scale = distance_pixels / reference_length
+
 
     def on_click(self, event):
         # CREATING LINES/SHAPES MODE
@@ -185,6 +187,14 @@ class MeasurementApp:
 
         return ((x2 - x1)**2 + (y2 - y1)**2)**0.5 < 5
     
+    def is_point_on_line(self, x, y, line):
+        # check if a point (x, y) is near a line defined by its endpoints
+        x1, y1 = line.start
+        x2, y2 = line.end
+        distance = abs((x2 - x1) * (y1 - y) - (x1 - x) * (y2 - y1)) / ((x2 - x1)**2 + (y2 - y1)**2)**0.5
+        return distance < 5  # Tolerance
+
+
     def draw_line_segment(self, start, end):
         color = "blue"  # Default to blue color
 
@@ -236,12 +246,11 @@ class MeasurementApp:
         # Create the text on top of the rectangle
         self.canvas.create_text(x, y, text=text, fill=fill)
 
-
-
     def fill_shape(self, shape, alpha=0.5):
         x_coords, y_coords = zip(*shape.vertices)
 
         self.canvas.create_polygon(shape.vertices, fill="white", outline="", stipple='gray12', width=2)
+
 
     def on_right_click(self, event):
         # Print the selected line label
@@ -251,13 +260,6 @@ class MeasurementApp:
                 self.selected_line = line
                 print(self.selected_line.label)
 
-            
-    def is_point_on_line(self, x, y, line):
-        # check if a point (x, y) is near a line defined by its endpoints
-        x1, y1 = line.start
-        x2, y2 = line.end
-        distance = abs((x2 - x1) * (y1 - y) - (x1 - x) * (y2 - y1)) / ((x2 - x1)**2 + (y2 - y1)**2)**0.5
-        return distance < 5  # Tolerance
     
     def calculate_distance(self, line):
         (x1, y1), (x2, y2) = line.start, line.end
@@ -284,6 +286,7 @@ class MeasurementApp:
 
         return abs(area) / 2
 
+
     def generate_report(self):
         lineList = ""
         distanceTotal = 0
@@ -291,7 +294,7 @@ class MeasurementApp:
             lineList += f"{round(line.distance, 2)}, "
 
             distanceTotal += line.distance
-        print("list of distances: " + lineList)
+        print("List of distances: " + lineList)
         print("Total Distance: ", round(distanceTotal, 2))
 
         areaList = ""
@@ -299,7 +302,7 @@ class MeasurementApp:
         for shape in self.shapes:
             areaList += f"{round(shape.area, 2)}, "
             areaTotal += shape.area
-        print("list of areas: " + areaList)
+        print("List of areas: " + areaList)
         print("Total Area: ", round(areaTotal, 2))
 
 if __name__ == "__main__":
