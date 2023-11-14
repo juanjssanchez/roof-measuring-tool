@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import simpledialog
 from collections import Counter
+import math
 
 class MeasurementMode:
     CREATE_SHAPE = "Create Shape"
@@ -18,6 +19,35 @@ class Shape:
     def __init__(self, vertices):
         self.vertices = vertices
         self.area = None
+        self.pitch = (6, 12)  # Default pitch (6/12)
+
+    def area_including_pitch(self, scale):
+        rise, run = self.pitch
+        multiplier = math.sqrt( ((rise/run) * (rise/run)) + 1 )   # Roof Pitch Multiplier Formula 
+        
+        area = self.calculate_flat_area(scale)
+
+        return area * multiplier
+    
+    def calculate_flat_area(self, scale):
+        area = self.calculate_polygon_area(self.vertices)
+        area_units = area / (scale ** 2)  # convert pixels to units
+        return area_units
+
+    def calculate_polygon_area(self,vertices):
+        # Calculate the area of a polygon using the shoelace formula
+        n = len(vertices)
+        if n < 3:
+            return 0
+
+        area = 0
+        for i in range(n):
+            x1, y1 = vertices[i]
+            x2, y2 = vertices[(i + 1) % n]
+            area += (x1 * y2 - x2 * y1)
+
+        return abs(area) / 2
+
 
 class MeasurementApp:
     def __init__(self, root):
@@ -155,7 +185,7 @@ class MeasurementApp:
             if len(self.points) >= 3 and self.is_close_to_point(self.points[0], self.points[-1]):
                 self.shapes.append(Shape(self.points[:]))  # Store the shape
                 self.points = []  # Reset points for the next shape
-                self.shapes[-1].area = self.calculate_area(self.shapes[-1])
+                self.shapes[-1].area = Shape.area_including_pitch(self.shapes[-1], self.scale)
                 self.draw_area(self.shapes[-1], self.shapes[-1].area)
         
         # EDIT LINE MODE
@@ -252,7 +282,6 @@ class MeasurementApp:
 
         self.canvas.create_polygon(shape.vertices, fill="white", outline="", stipple='gray12', width=2)
 
-
     def on_right_click(self, event):
         # Print the selected line label
         for line in self.lines:
@@ -260,32 +289,12 @@ class MeasurementApp:
                 # Highlight the selected line
                 self.selected_line = line
                 print(self.selected_line.label)
-
     
     def calculate_distance(self, line):
         (x1, y1), (x2, y2) = line.start, line.end
         distance_pixels = ((x2 - x1)**2 + (y2 - y1)**2)**0.5
         distance_units = distance_pixels / self.scale
         return distance_units
-
-    def calculate_area(self, shape):
-        area = self.calculate_polygon_area(shape.vertices)
-        area_units = area / (self.scale ** 2)  # convert pixels to units
-        return area_units
-
-    def calculate_polygon_area(self, vertices):
-        # Calculate the area of a polygon using the shoelace formula
-        n = len(vertices)
-        if n < 3:
-            return 0
-
-        area = 0
-        for i in range(n):
-            x1, y1 = vertices[i]
-            x2, y2 = vertices[(i + 1) % n]
-            area += (x1 * y2 - x2 * y1)
-
-        return abs(area) / 2
 
 
     def generate_report(self):
