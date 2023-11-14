@@ -2,19 +2,13 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import simpledialog
 from collections import Counter
+from LineSegment import LineSegment
 
 from Shape import Shape
 
 class MeasurementMode:
     CREATE_SHAPE = "Create Shape"
     EDIT_LINE = "Edit Line"
-
-class LineSegment:
-    def __init__(self, start, end, color="blue"):
-        self.start = start
-        self.end = end
-        self.distance = None
-        self.label = "Eave" # Default
 
 class MeasurementApp:
     def __init__(self, root):
@@ -145,7 +139,7 @@ class MeasurementApp:
 
             # Calculate distance between points
             if len(self.points) >= 2 and self.scale:
-                self.lines[-1].distance = self.calculate_distance(self.lines[-1])
+                self.lines[-1].distance = LineSegment.calculate_distance(self.lines[-1], self.scale)
                 self.draw_line_measurement(self.lines[-1])
 
             # Check if shape should be closed
@@ -255,12 +249,6 @@ class MeasurementApp:
                 # Highlight the selected line
                 self.selected_line = line
                 print(self.selected_line.label)
-    
-    def calculate_distance(self, line):
-        (x1, y1), (x2, y2) = line.start, line.end
-        distance_pixels = ((x2 - x1)**2 + (y2 - y1)**2)**0.5
-        distance_units = distance_pixels / self.scale
-        return distance_units
 
 
     def generate_report(self):
