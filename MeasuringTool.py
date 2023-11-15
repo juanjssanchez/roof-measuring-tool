@@ -3,7 +3,6 @@ from tkinter import filedialog
 from tkinter import simpledialog
 from collections import Counter
 from LineSegment import LineSegment
-
 from Shape import Shape
 
 class MeasurementMode:
@@ -16,7 +15,8 @@ class MeasurementApp:
         self.root.title("Measurement Tool")
         
         self.canvas = tk.Canvas(root)
-        self.canvas.pack(expand=tk.YES, fill=tk.BOTH)
+        #self.canvas.pack(expand=tk.YES, fill=tk.BOTH)
+        self.canvas.grid(row=0, column=0, columnspan=4, rowspan=4, sticky=tk.NSEW)
         self.canvas.config(width=900, height=600) # Initial canvas size
         self.canvas.bind("<Button-1>", self.on_click)
         self.canvas.bind("<Button-3>", self.on_right_click)  # Right click to select lines
@@ -51,12 +51,13 @@ class MeasurementApp:
 
         # Create a label selection frame
         self.label_frame = tk.Frame(self.root)
-        self.label_frame.pack()
+        #self.label_frame.pack()
+        self.label_frame.grid(row=4, column=0, columnspan=4, sticky=tk.W)
 
         # Create label buttons
         labels = ["Ridge", "Valley", "Rake", "Eave"]
         self.label_buttons = []
-        for label in labels:
+        for i, label in enumerate(labels):
             label_button = tk.Radiobutton(
                 self.label_frame,
                 text=label,
@@ -64,7 +65,8 @@ class MeasurementApp:
                 value=label,
             )
             self.label_buttons.append(label_button)
-            label_button.pack(side=tk.LEFT)
+            #label_button.pack(side=tk.LEFT)
+            label_button.grid(row=0, column=i, padx=5)
             label_button.configure(state="disabled")  # Initially disable the buttons
 
         # Set an initial value for the selected label
