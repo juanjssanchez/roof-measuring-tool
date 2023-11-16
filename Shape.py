@@ -1,6 +1,5 @@
 import math
 
-
 class Shape:
     def __init__(self, vertices):
         self.vertices = vertices
