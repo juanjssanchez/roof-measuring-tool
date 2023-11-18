@@ -54,3 +54,5 @@ class MeasurementModel:
         string_counts = Counter(labelList)
         for string, count in string_counts.items():
             print(f"{string}: {count}")
+
+        return distanceList, distanceTotal, labelList, areaList, areaTotal, string_counts

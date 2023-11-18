@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, simpledialog
 from model import MeasurementMode
+from collections import Counter
 
 class MeasurementView:
     def __init__(self, root, model):
@@ -26,7 +27,7 @@ class MeasurementView:
         file_menu.add_command(label="Open Image", command=self.open_image)
         file_menu.add_command(label="Create Shape Mode", command=self.set_create_shape_mode)
         file_menu.add_command(label="Edit Line Mode", command=self.set_edit_line_mode)
-        file_menu.add_command(label="Generate Final Report", command=model.generate_report)
+        file_menu.add_command(label="Generate Final Report", command=self.draw_report)
 
         model.selected_label = tk.StringVar()
         
@@ -137,3 +138,27 @@ class MeasurementView:
     def fill_shape(self, shape, alpha=0.5):
 
         self.canvas.create_polygon(shape.vertices, fill="white", outline="", stipple='gray12', width=2)
+
+    def draw_report(self):
+
+        distanceList, distanceTotal, labelList, areaList, areaTotal, string_counts = self.model.generate_report()
+
+        # Create a new window to display the report
+        report_window = tk.Toplevel()
+        report_window.title("Final Report")
+
+        # Create a text widget
+        report_text = tk.Text(report_window, wrap="word", height=20, width=60)
+        report_text.grid(row=0, column=0, padx=10, pady=10)
+
+        # Insert the content into the widget
+        report_text.insert(tk.END, "List of distances: " + distanceList + "\n")
+        report_text.insert(tk.END, "Total Distance: " + str(round(distanceTotal, 2)) + "\n\n")
+        report_text.insert(tk.END, "List of areas: " + areaList + "\n")
+        report_text.insert(tk.END, "Total Area: " + str(round(areaTotal, 2)) + "\n\n")
+        report_text.insert(tk.END, "Counts:\n")
+        for string, count in string_counts.items():
+            report_text.insert(tk.END, f"{string}: {count}\n")
+
+        # Make the text widget read-only
+        report_text.configure(state=tk.DISABLED)
