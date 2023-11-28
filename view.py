@@ -51,6 +51,17 @@ class MeasurementView:
         # Set an initial value for the selected label
         model.selected_label.set(model.labels[0])
 
+        # Create a frame to hold the pitch list
+        self.pitch_list_frame = tk.Frame(root)
+        self.pitch_list_frame.grid(row=0, column=3, padx=10, pady=10, sticky=tk.NE)  # Use grid and set sticky to tk.NE (North-East)
+
+        # Initialize the pitch list widget
+        self.pitch_list = PitchList(
+            self.pitch_list_frame,
+            pitches=["6/12", "7/12", "8/12", "9/12", "10/12"],
+            on_pitch_selected=self.on_pitch_selected
+        )
+
 
     def open_image(self):
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.gif *.bmp")])
@@ -162,3 +173,31 @@ class MeasurementView:
 
         # Make the text widget read-only
         report_text.configure(state=tk.DISABLED)
+
+
+
+    def on_pitch_selected(self, selected_pitch):
+        print(f"Selected Pitch: {selected_pitch}")
+    
+
+class PitchList:
+    def __init__(self, root, pitches, on_pitch_selected):
+        self.root = root
+        self.pitches = pitches
+        self.selected_pitch = None
+        self.on_pitch_selected = on_pitch_selected
+
+        self.frame = tk.Frame(root)
+        self.frame.pack(side=tk.RIGHT, padx=10, pady=10)
+
+        self.listbox = tk.Listbox(self.frame, selectmode=tk.SINGLE)
+        for pitch in pitches:
+            self.listbox.insert(tk.END, pitch)
+        self.listbox.pack()
+    
+    def update_selected_pitch(self, index):
+        value = self.listbox.get(index)
+        self.selected_pitch = value
+        if self.on_pitch_selected:
+            self.on_pitch_selected(self.selected_pitch)
+            return self.selected_pitch

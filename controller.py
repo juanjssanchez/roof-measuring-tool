@@ -10,6 +10,9 @@ class MeasurementController:
         self.view.canvas.bind("<Button-1>", self.on_click)  # Bind the canvas click event
         self.view.canvas.bind("<Button-3>", self.on_right_click) # Right click to select lines
 
+        # Bind the pitch listbox click events
+        self.view.pitch_list.listbox.bind("<Button-1>", self.on_pitch_list_click)
+
     def on_click(self, event):
         # CREATING LINES/SHAPES MODE
         if self.model.mode == MeasurementMode.CREATE_SHAPE:
@@ -91,11 +94,37 @@ class MeasurementController:
         x2, y2 = line.end
         distance = abs((x2 - x1) * (y1 - y) - (x1 - x) * (y2 - y1)) / ((x2 - x1)**2 + (y2 - y1)**2)**0.5
         return distance < 5  # Tolerance
+    
+    def is_point_in_shape(self, x, y, shape):
+        # Check if a point is inside a given shape using the Ray Casting algorithm
+        num_vertices = len(shape.vertices)
+
+        intersect_count = 0
+        for i in range(num_vertices):
+            x1, y1 = shape.vertices[i]
+            x2, y2 = shape.vertices[(i + 1) % num_vertices]  # Wrap around for the last edge
+
+            # Check if the point is above, below, or on the edge
+            if (y1 <= y < y2) or (y2 <= y < y1):
+                # Check if the ray crosses the edge
+                if x1 + (y - y1) / (y2 - y1) * (x2 - x1) < x:
+                    intersect_count += 1
+
+        # If the number of intersections is odd, the point is inside the polygon
+        return intersect_count % 2 == 1
+
+
+    def on_pitch_list_click(self, event):
+        index = self.view.pitch_list.listbox.nearest(event.y)
+        pitch = self.view.pitch_list.update_selected_pitch(index)
+        print(pitch)
+
 
     def on_right_click(self, event):
-        # Print the selected line label
-        for line in self.model.lines:
-            if self.is_point_on_line(event.x, event.y, line):
-                # Highlight the selected line
-                self.model.selected_line = line
-                print(self.model.selected_line.label)
+        x, y = event.x, event.y
+
+        # Check if clicked on shape
+        for shape in self.model.shapes:
+            if self.is_point_in_shape(x, y, shape):
+                print(shape.pitch)
+                return
