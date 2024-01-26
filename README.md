@@ -26,15 +26,15 @@ The first line you create will prompt you to enter the real world measurement (f
 
 ### Outlining
 
-Click a corner of a roof face to begin outlining. Click the remaining corners of the roof face until you "close" the shape by reaching the first dot again. Closing a shape will shade it in and give the estimated surface area. Repeat this for every slope. 
+Click a corner of a roof face to begin outlining. Click the remaining corners of the roof face until you "close" the shape by reaching the first dot again. Closing a shape will automatically shade it in and give the estimated surface area for that specific section. Repeat this for every slope. 
 
 Make sure to click the existing points if you are outlining a slope that shares an edge with a shape you have already created.
 
 ### Labeling edges
 <img src="https://github.com/juanjssanchez/measuringtool/assets/47364524/ca385c34-d67d-4300-bed9-24080a706ca9" width="500">
 
-In the drop down menu, click Edit Line Mode to start labeling the edges. At the bottom of the screen you can choose a label type (such as Ridge or Valley) and simply click on a line to label it.
+In the drop down menu, click Edit Line Mode to start labeling the edges. At the bottom of the screen you can choose a label type (such as Ridge or Valley) and simply click on a line to label it. This will allow you to specify what kind of edge it is in order to help you with your materials.
 
 ### Generate Final Report
 
-When you are done outlining and labeling you can click the drop down menu to generate a final report. The report will list out all the values and details of the roof.
+When you are done outlining and labeling you can click the drop down menu to generate a final report. The report will list out all the values and details of the roof, such as total surface area or number of valley edges.
